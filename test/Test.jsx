@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Document, Outline, Page, setOptions } from 'react-pdf/src/entry.webpack';
+import { Document, Outline, Page } from 'react-pdf/src/entry.webpack';
 import 'react-pdf/src/Page/AnnotationLayer.css';
 
 import './Test.less';
@@ -9,10 +9,10 @@ import ViewOptions from './ViewOptions';
 
 import { dataURItoBlob } from './shared/utils';
 
-setOptions({
+const options = {
   cMapUrl: 'cmaps/',
   cMapPacked: true,
-});
+};
 
 /* eslint-disable no-console */
 
@@ -145,7 +145,8 @@ export default class Test extends Component {
                 render &&
                   <Document
                     className="custom-classname-document"
-                    file={file}
+                    src={file}
+                    options={options}
                   >
                     <Outline
                       className="custom-classname-outline"
@@ -160,11 +161,12 @@ export default class Test extends Component {
                   <Document
                     className="custom-classname-document"
                     onItemClick={this.onItemClick}
-                    file={file}
+                    src={file}
                     onClick={(event, pdf) => console.log('Clicked a document', { event, pdf })}
                     onLoadSuccess={this.onDocumentLoadSuccess}
                     onLoadError={this.onDocumentLoadError}
                     onSourceError={this.onDocumentLoadError}
+                    options={options}
                     rotate={rotate}
                   >
                     {

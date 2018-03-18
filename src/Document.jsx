@@ -4,6 +4,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import mergeClassNames from 'merge-class-names';
+import pdfjs, { PDFDataRangeTransport } from 'pdfjs-dist';
 
 import LinkService from './LinkService';
 
@@ -19,10 +20,10 @@ import {
   isDataURI,
   isFile,
   isParamObject,
-  isString,
   makeCancellable,
   warnOnDev,
 } from './shared/utils';
+
 import { makeEventProps } from './shared/events';
 
 import { eventsProps, isClassName, isLinkService, isPdf } from './shared/propTypes';
@@ -80,10 +81,11 @@ export default class Document extends Component {
   getChildContext() {
     const { linkService, registerPage, unregisterPage } = this;
     const { rotate } = this.props;
+    const { pdf } = this.state;
 
     return {
       linkService,
-      pdf: this.state.pdf,
+      pdf,
       registerPage,
       rotate,
       unregisterPage,
@@ -100,15 +102,13 @@ export default class Document extends Component {
   onSourceSuccess = (source) => {
     callIfDefined(this.props.onSourceSuccess);
 
-    if (!PDFJS) {
-      throw new Error('Could not load the document. PDF.js is not loaded.');
-    }
-
     if (!source) {
       return null;
     }
 
-    this.runningTask = makeCancellable(PDFJS.getDocument(source));
+    const { options } = this.props;
+
+    this.runningTask = makeCancellable(pdfjs.getDocument({ ...source, ...options }));
 
     return this.runningTask.promise
       .then(this.onLoadSuccess)
@@ -173,23 +173,23 @@ export default class Document extends Component {
   }
 
   shouldLoadDocument(nextProps) {
-    const { file: nextFile } = nextProps;
-    const { file } = this.props;
+    const { src: nextSrc } = nextProps;
+    const { src } = this.props;
 
-    // We got file of different type - clearly there was a change
-    if (typeof nextFile !== typeof file) {
+    // We got src of different type - clearly there was a change
+    if (typeof nextSrc !== typeof src) {
       return true;
     }
 
     // We got an object and previously it was an object too - we need to compare deeply
-    if (isParamObject(nextFile) && isParamObject(file)) {
+    if (isParamObject(nextSrc) && isParamObject(src)) {
       return (
-        nextFile.data !== file.data ||
-        nextFile.range !== file.range ||
-        nextFile.url !== file.url
+        nextSrc.data !== src.data ||
+        nextSrc.range !== src.range ||
+        nextSrc.url !== src.url
       );
     // We either have or had an object - most likely there was a change
-    } else if (isParamObject(nextFile) || isParamObject(file)) {
+    } else if (isParamObject(nextSrc) || isParamObject(src)) {
       return true;
     }
 
@@ -199,25 +199,25 @@ export default class Document extends Component {
      */
     if (
       isBrowser &&
-      // File is a Blob or a File
-      (isBlob(nextFile) || isFile(nextFile)) &&
-      (isBlob(file) || isFile(file))
+      // Src is a Blob or a Src
+      (isBlob(nextSrc) || isFile(nextSrc)) &&
+      (isBlob(src) || isFile(src))
     ) {
       /**
-       * Theoretically, we could compare files here by reading them, but that would severely affect
+       * Theoretically, we could compare srcs here by reading them, but that would severely affect
        * performance. Therefore, we're making a compromise here, agreeing on not loading the next
-       * file if its size is identical as the previous one's.
+       * src if its size is identical as the previous one's.
        */
-      return nextFile.size !== file.size;
+      return nextSrc.size !== src.size;
     }
 
-    return nextFile !== file;
+    return nextSrc !== src;
   }
 
   loadDocument(props = this.props) {
     cancelRunningTask(this.runningTask);
 
-    this.runningTask = makeCancellable(this.findDocumentSource(props.file));
+    this.runningTask = makeCancellable(this.findDocumentSource(props));
 
     return this.runningTask.promise
       .then(this.onSourceSuccess)
@@ -227,41 +227,32 @@ export default class Document extends Component {
   /**
    * Attempts to find a document source based on props.
    */
-  findDocumentSource = (file = this.props.file) => new Promise((resolve, reject) => {
-    if (!file) {
+  findDocumentSource = (props = this.props) => new Promise((resolve, reject) => {
+    const { src } = props;
+
+    if (!src) {
       return resolve(null);
     }
 
-    // File is a string
-    if (isString(file)) {
-      if (isDataURI(file)) {
-        const fileUint8Array = dataURItoUint8Array(file);
-        return resolve(fileUint8Array);
+    // src is a string
+    if (typeof src === 'string') {
+      if (isDataURI(src)) {
+        const fileUint8Array = dataURItoUint8Array(src);
+        return resolve({ data: fileUint8Array });
       }
 
       displayCORSWarning();
-      return resolve(file);
+      return resolve({ url: src });
     }
 
-    if (isArrayBuffer(file)) {
-      return resolve(file);
+    // src is PDFDataRangeTransport
+    if (src instanceof PDFDataRangeTransport) {
+      return resolve({ range: src });
     }
 
-    if (isParamObject(file)) {
-      // Prevent from modifying props
-      const modifiedFile = Object.assign({}, file);
-
-      if ('url' in modifiedFile) {
-        // File is data URI
-        if (isDataURI(modifiedFile.url)) {
-          const fileUint8Array = dataURItoUint8Array(modifiedFile.url);
-          return resolve(fileUint8Array);
-        }
-
-        displayCORSWarning();
-      }
-
-      return resolve(modifiedFile);
+    // src is an array buffer
+    if (isArrayBuffer(src)) {
+      return resolve({ data: src });
     }
 
     /**
@@ -270,10 +261,10 @@ export default class Document extends Component {
      */
     if (isBrowser) {
       // File is a Blob
-      if (isBlob(file) || isFile(file)) {
+      if (isBlob(src) || isFile(src)) {
         const reader = new FileReader();
 
-        reader.onload = () => resolve(new Uint8Array(reader.result));
+        reader.onload = () => resolve({ data: new Uint8Array(reader.result) });
         reader.onerror = (event) => {
           switch (event.target.error.code) {
             case event.target.error.NOT_FOUND_ERR:
@@ -288,14 +279,22 @@ export default class Document extends Component {
               return reject(new Error('Error while reading a file.'));
           }
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsArrayBuffer(src);
 
         return null;
       }
     }
 
-    // No supported loading method worked
-    return reject(new Error('Unsupported loading method.'));
+    // At this point, src must be an object
+    if (typeof src !== 'object') {
+      reject(new Error('Invalid parameter in src, need either Uint8Array, string or a parameter object'));
+    }
+
+    if (!src.url && !src.data && !src.range) {
+      reject(new Error('Invalid parameter object: need either .data, .range or .url'));
+    }
+
+    return resolve(src);
   })
 
   registerPage = (pageIndex, ref) => {
@@ -325,11 +324,11 @@ export default class Document extends Component {
   }
 
   render() {
-    const { className, file, inputRef } = this.props;
+    const { className, src, inputRef } = this.props;
     const { pdf } = this.state;
 
     let content;
-    if (!file) {
+    if (!src) {
       content = this.renderNoData();
     } else if (pdf === null) {
       content = this.renderLoader();
@@ -369,7 +368,7 @@ Document.propTypes = {
   children: PropTypes.node,
   className: isClassName,
   error: PropTypes.node,
-  file: isFile,
+  src: isFile,
   inputRef: PropTypes.func,
   loading: PropTypes.node,
   noData: PropTypes.node,
@@ -378,6 +377,10 @@ Document.propTypes = {
   onLoadSuccess: PropTypes.func,
   onSourceError: PropTypes.func,
   onSourceSuccess: PropTypes.func,
+  options: PropTypes.shape({
+    cMapPacked: PropTypes.bool,
+    cMapUrl: PropTypes.string,
+  }),
   rotate: PropTypes.number,
   ...eventsProps(),
 };

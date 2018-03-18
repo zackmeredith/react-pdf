@@ -1,22 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { mount, shallow } from 'enzyme';
+import pdfjs from 'pdfjs-dist';
 
-import { Document } from '../entry.noworker';
+import { Document } from '../entry';
 
 import { makeAsyncCallback, loadPDF, muteConsole, restoreConsole } from './utils';
 
-const {
-  arrayBuffer: fileArrayBuffer,
-  blob: fileBlob,
-  file: fileFile,
-  dataURI: fileDataURI,
-} = loadPDF('./__mocks__/_pdf.pdf');
-
-const {
-  arrayBuffer: fileArrayBuffer2,
-  file: fileFile2,
-} = loadPDF('./__mocks__/_pdf2.pdf');
+const pdfFile = loadPDF('./__mocks__/_pdf.pdf');
+const pdfFile2 = loadPDF('./__mocks__/_pdf2.pdf');
 
 const OK = Symbol('OK');
 
@@ -34,10 +26,10 @@ describe('Document', () => {
   const desiredLoadedPdf2 = {};
 
   beforeAll(async () => {
-    const pdf = await PDFJS.getDocument({ data: fileArrayBuffer });
+    const pdf = await pdfjs.getDocument({ data: pdfFile.arrayBuffer });
     desiredLoadedPdf.pdfInfo = pdf.pdfInfo;
 
-    const pdf2 = await PDFJS.getDocument({ data: fileArrayBuffer2 });
+    const pdf2 = await pdfjs.getDocument({ data: pdfFile2.arrayBuffer });
     desiredLoadedPdf2.pdfInfo = pdf2.pdfInfo;
   });
 
@@ -48,7 +40,7 @@ describe('Document', () => {
 
       shallow(
         <Document
-          file={fileDataURI}
+          src={pdfFile.dataURI}
           onLoadSuccess={onLoadSuccess}
           onSourceSuccess={onSourceSuccess}
         />
@@ -65,7 +57,7 @@ describe('Document', () => {
 
       shallow(
         <Document
-          file={{ url: fileDataURI }}
+          src={{ url: pdfFile.dataURI }}
           onLoadSuccess={onLoadSuccess}
           onSourceSuccess={onSourceSuccess}
         />
@@ -82,7 +74,7 @@ describe('Document', () => {
 
       shallow(
         <Document
-          file={fileArrayBuffer}
+          src={pdfFile.arrayBuffer}
           onLoadSuccess={onLoadSuccess}
           onSourceSuccess={onSourceSuccess}
         />
@@ -99,7 +91,7 @@ describe('Document', () => {
 
       shallow(
         <Document
-          file={fileBlob}
+          src={pdfFile.blob}
           onLoadSuccess={onLoadSuccess}
           onSourceSuccess={onSourceSuccess}
         />
@@ -116,7 +108,7 @@ describe('Document', () => {
 
       shallow(
         <Document
-          file={fileFile}
+          src={pdfFile.file}
           onLoadSuccess={onLoadSuccess}
           onSourceSuccess={onSourceSuccess}
         />
@@ -133,7 +125,7 @@ describe('Document', () => {
 
       const mountedComponent = shallow(
         <Document
-          file={fileFile}
+          src={pdfFile.arrayBuffer}
           onLoadSuccess={onLoadSuccess}
           onSourceSuccess={onSourceSuccess}
         />
@@ -147,7 +139,7 @@ describe('Document', () => {
       const { func: onLoadSuccess2, promise: onLoadSuccessPromise2 } = makeAsyncCallback();
 
       mountedComponent.setProps({
-        file: fileFile2,
+        file: pdfFile2.arrayBuffer,
         onLoadSuccess: onLoadSuccess2,
         onSourceSuccess: onSourceSuccess2,
       });
@@ -208,7 +200,7 @@ describe('Document', () => {
 
       const component = shallow(
         <Document
-          file={fileFile}
+          src={pdfFile.arrayBuffer}
           onLoadSuccess={onLoadSuccess}
         />
       );
@@ -227,7 +219,7 @@ describe('Document', () => {
 
       const component = shallow(
         <Document
-          file={fileFile}
+          src={pdfFile.arrayBuffer}
           loading="Loading"
           onLoadSuccess={onLoadSuccess}
         />
@@ -250,7 +242,7 @@ describe('Document', () => {
 
       const component = shallow(
         <Document
-          file={failingPdf}
+          src={failingPdf}
           onLoadError={onLoadError}
         />
       );
@@ -275,7 +267,7 @@ describe('Document', () => {
 
       const component = shallow(
         <Document
-          file={failingPdf}
+          src={failingPdf}
           error="Error"
           onLoadError={onLoadError}
         />
@@ -298,7 +290,7 @@ describe('Document', () => {
 
       const component = shallow(
         <Document
-          file={fileFile}
+          src={pdfFile.arrayBuffer}
           loading="Loading"
           onLoadSuccess={onLoadSuccess}
           rotate={90}
@@ -319,7 +311,7 @@ describe('Document', () => {
 
       const component = shallow(
         <Document
-          file={fileFile}
+          src={pdfFile.arrayBuffer}
           loading="Loading"
           onLoadSuccess={onLoadSuccess}
           rotate={90}

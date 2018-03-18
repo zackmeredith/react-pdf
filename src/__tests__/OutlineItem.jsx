@@ -2,14 +2,11 @@ import React from 'react';
 import { shallow, mount } from 'enzyme';
 import pdfjs from 'pdfjs-dist';
 
-import {} from '../entry.noworker';
 import OutlineItem from '../OutlineItem';
 
 import { loadPDF, makeAsyncCallback } from './utils';
 
-const { PDFJS } = pdfjs;
-
-const { arrayBuffer: fileArrayBuffer } = loadPDF('./__mocks__/_pdf.pdf');
+const pdfFile = loadPDF('./__mocks__/_pdf.pdf');
 
 /* eslint-disable comma-dangle */
 
@@ -21,7 +18,7 @@ describe('OutlineItem', () => {
   let outlineItem = null;
 
   beforeAll(async () => {
-    pdf = await PDFJS.getDocument({ data: fileArrayBuffer });
+    pdf = await pdfjs.getDocument({ data: pdfFile.arrayBuffer });
 
     const outlineItems = await pdf.getOutline();
     [outlineItem] = outlineItems;

@@ -9,7 +9,7 @@ Display PDFs in your React app as easily as if they were images.
 ## tl;dr
 * Install by executing `npm install react-pdf` or `yarn add react-pdf`.
 * Import by adding `import { Document } from 'react-pdf'`.
-* Use by adding `<Document file="..." />`. `file` can be a URL, base64 content, Uint8Array, and more.
+* Use by adding `<Document src="..." />`. `src` can be a URL, base64 content, Uint8Array, and more.
 * Put `<Page />` components inside `<Document />` to render pages.
 
 ## Demo
@@ -60,7 +60,7 @@ class MyApp extends Component {
     return (
       <div>
         <Document
-          file="somefile.pdf"
+          src="somefile.pdf"
           onLoadSuccess={this.onDocumentLoad}
         >
           <Page pageNumber={pageNumber} />
@@ -102,14 +102,6 @@ import { Document } from 'react-pdf/dist/entry.parcel';
 
 If you use Browserify or other bundling tools, you will have to make sure on your own that `pdf.worker.js` file from `pdfjs-dist/build` is copied to your project's output folder.
 
-#### I give up
-
-If you absolutely have to, you can import React PDF with worker disabled. You can do so by importing React-PDF like so:
-
-```js
-import { Document } from 'react-pdf/dist/entry.noworker';
-```
-
 ### Support for annotations
 
 If you want to use annotations (e.g. links) in PDFs rendered by React-PDF, then you would need to include stylesheet necessary for annotations to be correctly displayed like so:
@@ -123,7 +115,7 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 If you want to ensure that PDFs with non-latin characters will render perfectly, or you have encountered the following warning:
 
 ```
-Warning: CMap baseUrl must be specified, see "PDFJS.cMapUrl" (and also "PDFJS.cMapPacked").
+Warning: The CMap "baseUrl" parameter must be specified, ensure that the "cMapUrl" and "cMapPacked" API parameters are provided.
 ```
 
 then you would also need to include cMaps in your build and tell React-PDF where they are.
@@ -163,19 +155,15 @@ If you use Parcel, Browserify or other bundling tools, you will have to make sur
 
 #### Setting up React-PDF
 
-Now that you have cMaps in your build, import `setOptions` like so:
+Now that you have cMaps in your build, pass required options to Document component by using `options` prop, like so:
 
 ```js
-import { setOptions } from 'react-pdf';
-```
-
-**Note:** If you're using a different entry point, for example `react-pdf/build/entry.webpack'`, you can should use the same entry point to import `setOptions`. You can also add `setOptions` to the same `import` you're using to import `Document`, `Page`, and/or other components.
-
-```js
-setOptions({
-  cMapUrl: 'cmaps/',
-  cMapPacked: true,
-});
+<Document
+  options={{
+    cMapUrl: 'cmaps/',
+    cMapPacked: true,
+  }}
+/>
 ```
 
 ## User guide
@@ -244,23 +232,6 @@ Displays an outline (table of contents). Must be placed inside `<Document />` or
 |onLoadSuccess|Function called when the outline is successfully retreived.|`() => alert('The outline has been successfully retreived.')`|
 |onParseError|Function called in case of an error while parsing the outline.|`(error) => alert('Error while parsing the outline! ' + error.message)`|
 |onParseSuccess|Function called when the outline is successfully parsed.|`({ outline }) => alert('There are ' + outline.length + ' top level items in the table of contents.')`|
-
-### setOptions
-
-Allows to set custom options of PDF.js renderer. Currently supported properties are:
-
-  - cMapUrl
-  - cMapPacked
-  - disableWorker
-  - workerSrc
-
-Example usage:
-
-```js
-setOptions({
-  workerSrc: 'my-path-to-worker.js'
-});
-```
 
 ## License
 

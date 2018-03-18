@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
-import { Document, Page, setOptions } from 'react-pdf/dist/entry.parcel';
+import { Document, Page } from 'react-pdf/dist/entry.parcel';
 
 import './Sample.less';
 
 import pdfFile from './sample.pdf';
 
-setOptions({
+const options = {
   cMapUrl: 'cmaps/',
   cMapPacked: true,
-});
+};
 
 export default class Sample extends Component {
   state = {
@@ -45,8 +45,9 @@ export default class Sample extends Component {
           </div>
           <div className="Example__container__document">
             <Document
-              file={file}
+              src={file}
               onLoadSuccess={this.onDocumentLoadSuccess}
+              options={options}
             >
               {
                 Array.from(

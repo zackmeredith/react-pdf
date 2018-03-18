@@ -2,15 +2,13 @@ import React from 'react';
 import { mount, shallow } from 'enzyme';
 import pdfjs from 'pdfjs-dist';
 
-import { Page } from '../entry.noworker';
+import { Page } from '../entry';
 
 import failingPdf from '../../__mocks__/_failing_pdf';
 import silentlyFailingPdf from '../../__mocks__/_silently_failing_pdf';
 import { loadPDF, makeAsyncCallback, muteConsole, restoreConsole } from './utils';
 
-const { PDFJS } = pdfjs;
-
-const { arrayBuffer: fileArrayBuffer } = loadPDF('./__mocks__/_pdf.pdf');
+const pdfFile = loadPDF('./__mocks__/_pdf.pdf');
 
 /* eslint-disable comma-dangle */
 
@@ -27,7 +25,7 @@ describe('Page', () => {
   let unregisterPageArguments = null;
 
   beforeAll(async () => {
-    pdf = await PDFJS.getDocument({ data: fileArrayBuffer });
+    pdf = await pdfjs.getDocument({ data: pdfFile.arrayBuffer });
 
     const page = await pdf.getPage(1);
     desiredLoadedPage.pageIndex = page.pageIndex;
