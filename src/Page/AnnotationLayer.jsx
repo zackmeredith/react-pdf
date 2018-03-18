@@ -22,6 +22,10 @@ export default class AnnotationLayer extends Component {
 
   componentWillReceiveProps(nextProps, nextContext) {
     if (nextContext.page !== this.context.page) {
+      if (this.state.annotations !== null) {
+        this.setState({ annotations: null });
+      }
+
       this.getAnnotations(nextContext);
     }
   }
@@ -67,11 +71,7 @@ export default class AnnotationLayer extends Component {
     const { page } = context;
 
     if (!page) {
-      throw new Error('Attempted to load page text content, but no page was specified.');
-    }
-
-    if (this.state.annotations !== null) {
-      this.setState({ annotations: null });
+      throw new Error('Attempted to load page annotations, but no page was specified.');
     }
 
     this.runningTask = makeCancellable(page.getAnnotations());
