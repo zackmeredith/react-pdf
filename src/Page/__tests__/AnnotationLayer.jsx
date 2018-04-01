@@ -1,17 +1,15 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import pdfjs from 'pdfjs-dist';
 
-import {} from '../../entry.noworker';
+import { pdfjs } from '../../entry.jest';
+
 import { AnnotationLayerInternal as AnnotationLayer } from '../AnnotationLayer';
 
 import failingPage from '../../../__mocks__/_failing_page';
 
 import { loadPDF, makeAsyncCallback, muteConsole, restoreConsole } from '../../__tests__/utils';
 
-const { PDFJS } = pdfjs;
-
-const { arrayBuffer: fileArrayBuffer } = loadPDF('./__mocks__/_pdf.pdf');
+const pdfFile = loadPDF('./__mocks__/_pdf.pdf');
 
 /* eslint-disable comma-dangle */
 
@@ -25,7 +23,7 @@ describe('AnnotationLayer', () => {
   let desiredAnnotations2;
 
   beforeAll(async () => {
-    const pdf = await PDFJS.getDocument({ data: fileArrayBuffer });
+    const pdf = await pdfjs.getDocument({ data: pdfFile.arrayBuffer });
 
     page = await pdf.getPage(1);
     desiredAnnotations = await page.getAnnotations();

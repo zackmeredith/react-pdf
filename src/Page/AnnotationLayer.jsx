@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
+import pdfjs from 'pdfjs-dist';
 
 import DocumentContext from '../DocumentContext';
 import PageContext from '../PageContext';
@@ -122,8 +123,10 @@ export class AnnotationLayerInternal extends PureComponent {
       viewport,
     };
 
+    console.log(linkService);
+
     try {
-      PDFJS.AnnotationLayer.render(parameters);
+      pdfjs.AnnotationLayer.render(parameters);
       this.onRenderSuccess();
     } catch (error) {
       this.onRenderError(error);
